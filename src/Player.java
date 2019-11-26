@@ -44,6 +44,8 @@ public class Player extends Thread {
 
 	@Override
 	public void run() {
+		System.out.println("Player Thread running as invoked from main...");
+
 		initializeCards();
 
 		System.out.println("Player exited the game.");
@@ -51,18 +53,24 @@ public class Player extends Thread {
 
 	private void initializeCards() {
 
+		System.out.println("Player is initializingCards");
+		System.out.println("Player is waiting" 
+			+ " for Server card initialization...");
 		/* Wait for server to send cards in byte array format */
 
         try {
             System.out.println("Receiveing bytes from server "
-                + serverSocket + ".");
+                + serverSocket + "...");
 
             DataInputStream dataInputStream = new DataInputStream(
                 this.serverSocket.getInputStream());
                     // A stream is a smaller river.
+
+            // System.out.println("Wait!!");
             int dataLength = dataInputStream.readInt();
                 // the next four bytes of this input stream,
                 // interpreted as an int.
+            System.out.println("Hold!");
             byte[] dataByteArray = new byte[dataLength];
             if (dataLength > 0) {
                 dataInputStream.readFully(dataByteArray);
@@ -72,7 +80,10 @@ public class Player extends Thread {
             //      ^          ...to be interpreted as the initialized cards
 
         } catch (IOException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
+            // System.out.println("End of line exception!");
+            System.out.println("The server stopped!");
+            System.out.println("Server failed to send initializing cards!");
         }
 
         System.out.println("Player initialized with ...something...cards."

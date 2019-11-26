@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# run using command "sh run"
+# or chmod 777 run then ./run
+
+javac -d class src/*.java -Xlint:unchecked   # command for compiling
+# java -cp class Main # command for running 

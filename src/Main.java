@@ -12,6 +12,7 @@ public class Main {
 		// String serverName = args[0]; //get IP address of server from first param
         // int port = Integer.parseInt(args[1]); //get port from second param
 
+		System.out.println("Use ifconfig to see the correct host IP address.");
 		final Scanner scanner = new Scanner(System.in);
 		System.out.print("Host a game [y/n]?: ");
 		String hosting = scanner.next();
@@ -30,7 +31,6 @@ public class Main {
 			try {
 				Server server = new Server();
 				server.start();
-				// server.begin();
 			} catch (IOException e) {
 				// e.printStackTrace();
 				System.out.println("Default port unavailable!");
@@ -43,7 +43,8 @@ public class Main {
 		
 			try {
 				// Player player = new Player(scannedIP); 
-				Player player = new Player(HOST_IP); 
+				Player player = new Player(HOST_IP);
+				System.out.println("Main started the player thread to run...");
 				player.start();
 			} catch (IOException e) {
 				// e.printStackTrace();

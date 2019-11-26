@@ -19,6 +19,8 @@ public class PlayerAcceptingThread extends Thread {
 		ServerSocket serverSocket
 		) {
 
+		System.out.println("Instanciating Server.PlayerAcceptingThread");
+
 		this.playerListenerThreadList = playerListenerThreadList;
 		this.socketConnectionList = socketConnectionList;
 		this.serverSocket = serverSocket;
@@ -30,16 +32,25 @@ public class PlayerAcceptingThread extends Thread {
         * Wait for every connections
         * Then instanciate the PlayerListenerThread
         */
+		// System.out.println("Server.PlayerAcceptingThread is running...");
+
         try {
 	        for (int i=0; i < Server.MAX_PLAYERS; i+=1) {
-
+	        	int index = i + 1;
+	        	// System.out.println("Waiting for player connection #"
+	        		// + index + "...");
         		// a player connects
 	        	Socket clientSocket = serverSocket.accept();
 	        		// Record this connection...
 
+	        	// System.out.println("Player connection #"
+	        		// + index + " accepted.");
+
 	        	/* Update the ArrayList of PlayerListenerTread
 	        	* which is the same variable shared with the Server
 	        	*/
+	        	// System.out.println("Adding new Server.PlayerListenerThread" 
+	        		// + "for player #" + index);
 	        	PlayerListenerThread playerListenerThread
 	        		= new PlayerListenerThread(serverSocket, clientSocket);
 	        	playerListenerThreadList.add(playerListenerThread);
@@ -50,8 +61,7 @@ public class PlayerAcceptingThread extends Thread {
 	        	*/
 	        	socketConnectionList.add(clientSocket);
 	        		// ...here
-
-	        	int index = i + 1;
+	        	
 	        	System.out.println("Player " + index + " joined.");
 
 	        	connectionCount += 1;

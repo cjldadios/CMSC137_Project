@@ -85,6 +85,6 @@ public class PlayerListenerThread extends Thread {
 /*
 * readBytes() and sendBytes() was adopted from
 *   https://stackoverflow.com/questions/2878867/
-*       how-to-send-an-array-of-bytes-over-a-tcp-connection-java-programming
+how-to-send-an-array-of-bytes-over-a-tcp-connection-java-programming
 *   This was used to send data in bytes, not in UTF.
 */
