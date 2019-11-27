@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.io.DataOutputStream;
 
 public class Server extends Thread {
-	private static final int MIN_PLAYERS = 2; // 3 supposedly, else testing
+	private static final int MIN_PLAYERS = 1; // 3 supposedly, else testing
 	// private static final int SECONDS = 1000;
 	public static final int DEFAULT_PORT = 8080;
 	public static final int MAX_PLAYERS = 13;
@@ -125,15 +125,34 @@ public class Server extends Thread {
     		for (int i=0; i<4; i+=1) {
     			packetString = packetString + deckList.get(deckIndex + i);
     		}
-    		System.out.println("Sending packetString: " + packetString);
-    		// byte[] dataByteArray;
+    		deckIndex += 4; // Increment, since 4 cards have been used
 
+    		// packetString = "BBBBBBBB";
+    		packetString = "AAAA";
+
+
+    		System.out.println("Sending packetString: " + packetString);
+    		// Converting string to byte array
+    		byte[] dataByteArray = packetString.getBytes();
+
+    		System.out.println("PacketString lenght: " + packetString.length());
+    		System.out.println("Byte array length: " + dataByteArray.length);
+
+    		System.out.println("dataByteArray: " + dataByteArray);
+
+    		int dataStart = 0;
+    		int dataLength = dataByteArray.length;
     		// send cards
-			// sendBytes(playerSocket,dataByteArray,dataStart,dataLength);
+			sendBytes(playerSocket, dataByteArray, dataStart, dataLength);
 
     		System.out.println("Test one player.");
+
+    		System.out.println("Infinite loop.");
+    		// while(true) {
+    		// 	System.out.print("");
+    		// }
     		break;
-    	}
+    	} // End for each player socket
 
     	// more game steps here...
 	
@@ -185,9 +204,7 @@ public class Server extends Thread {
 		for (Integer cardKind : cardKindList) {
 			// Conversion
 			String kind = "";
-			if (cardKind == 0) {
-				kind = "10";
-			} else if (cardKind == 1) {
+			if (cardKind == 1) {
 				kind = "A";
 			} else if (cardKind == 10) {
 				kind = "J";
@@ -195,7 +212,7 @@ public class Server extends Thread {
 				kind = "Q";
 			} else if (cardKind == 12) {
 				kind = "K";
-			} else { // 1-9
+			} else { // 1-9, 0
 				kind = cardKind.toString();
 			}
 			// Instanciating the four suit cards<String> of this kind
@@ -207,7 +224,7 @@ public class Server extends Thread {
 		return pickedCards;
 	} // End pickCards()
 
-	public void sendBytes(
+	private void sendBytes(
 		Socket playerSocket,
 		byte[] dataByteArray,
         int dataStart,
@@ -220,7 +237,9 @@ public class Server extends Thread {
             DataOutputStream dataOutputStream = new DataOutputStream(
                 playerSocket.getOutputStream());
                     // A stream is a smaller river.
-            dataOutputStream.write(dataByteArray, dataStart, dataLength);
+            dataOutputStream.flush();
+            // dataOutputStream.write(dataByteArray, dataStart, dataLength);
+            dataOutputStream.write(dataByteArray);
             
         } catch (IOException e) {
             e.printStackTrace();

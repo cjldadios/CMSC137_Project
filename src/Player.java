@@ -6,13 +6,14 @@ import java.net.Socket;
 import java.io.IOException;
 import java.io.DataInputStream;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 
 public class Player extends Thread {
 	private ArrayList<String> cardList = new ArrayList<String>(4);
 
 	Socket serverSocket;
-	Socket socket;
+	// Socket socket;
 
 	private int playerId;
 
@@ -66,15 +67,35 @@ public class Player extends Thread {
                 this.serverSocket.getInputStream());
                     // A stream is a smaller river.
 
-            // System.out.println("Wait!!");
+
+            System.out.println("Wait!!");
             int dataLength = dataInputStream.readInt();
                 // the next four bytes of this input stream,
                 // interpreted as an int.
+
+            byte[] receivedBytes =  ByteBuffer.allocate(4)
+            							.putInt(dataLength).array();
+            System.out.println("receivedBytes.toString(): "
+            						+ receivedBytes.toString());
+            System.out.println("receivedBytes: "
+            						+ receivedBytes);
+
+
+            // String string = new String(byteArrray);
+            String string = new String(receivedBytes);
+            System.out.println("String: " + string);
+
+
             System.out.println("Hold!");
+            System.out.println("Data length: " + dataLength);
             byte[] dataByteArray = new byte[dataLength];
-            if (dataLength > 0) {
-                dataInputStream.readFully(dataByteArray);
-            }
+            System.out.println("It!");
+            // if (dataLength > 0) {
+            // 	System.out.println("DataLength > 0");
+            //     dataInputStream.readFully(dataByteArray);
+            // }
+
+            System.out.println("Received dataByteArray: " + dataByteArray);
             
             //dataByteArray;
             //      ^          ...to be interpreted as the initialized cards
