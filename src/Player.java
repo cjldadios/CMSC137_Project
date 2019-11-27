@@ -17,7 +17,8 @@ public class Player extends Thread {
 
 	private int playerId;
 
-	// private byte[];
+	// private ArrayList<String> cardAtHandStringList = new ArrayList<String>();
+	private String cardsAtHandString = "";
 
 	
 	public Player(String serverName) throws IOException {
@@ -67,37 +68,29 @@ public class Player extends Thread {
                 this.serverSocket.getInputStream());
                     // A stream is a smaller river.
 
+            // the next four bytes of this input stream,
+            // interpreted as an int.
+            // Sever sent eight bytes, sample = "KH4SAC2D"
+	        int fourBytesPart1of2 = dataInputStream.readInt(); // get "KH4S"
+	        int fourBytesPart2of2 = dataInputStream.readInt(); // get "AC2D"
 
-            System.out.println("Wait!!");
-            int dataLength = dataInputStream.readInt();
-                // the next four bytes of this input stream,
-                // interpreted as an int.
+            byte[] receivedBytesPart1 =  ByteBuffer.allocate(4)
+            							.putInt(fourBytesPart1of2).array();
+            byte[] receivedBytesPart2 =  ByteBuffer.allocate(4)
+            							.putInt(fourBytesPart2of2).array();
+          	
+            String part1String = new String(receivedBytesPart1);
+            String part2String = new String(receivedBytesPart2);
 
-            byte[] receivedBytes =  ByteBuffer.allocate(4)
-            							.putInt(dataLength).array();
-            System.out.println("receivedBytes.toString(): "
-            						+ receivedBytes.toString());
-            System.out.println("receivedBytes: "
-            						+ receivedBytes);
+            String completeReceivedDataString = part1String + part2String;
+            // System.out.println("completeReceivedDataString: " 
+            	// + completeReceivedDataString);
 
+            System.out.println("Saving received cards: "
+            	+ completeReceivedDataString + "...");
+            this.cardsAtHandString = completeReceivedDataString;
 
-            // String string = new String(byteArrray);
-            String string = new String(receivedBytes);
-            System.out.println("String: " + string);
-
-
-            System.out.println("Hold!");
-            System.out.println("Data length: " + dataLength);
-            byte[] dataByteArray = new byte[dataLength];
-            System.out.println("It!");
-            // if (dataLength > 0) {
-            // 	System.out.println("DataLength > 0");
-            //     dataInputStream.readFully(dataByteArray);
-            // }
-
-            System.out.println("Received dataByteArray: " + dataByteArray);
-            
-            //dataByteArray;
+            // //dataByteArray;
             //      ^          ...to be interpreted as the initialized cards
 
         } catch (IOException e) {

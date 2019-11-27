@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.io.DataOutputStream;
 
 public class Server extends Thread {
-	private static final int MIN_PLAYERS = 1; // 3 supposedly, else testing
+	private static final int MIN_PLAYERS = 2; // 3 supposedly, else testing
 	// private static final int SECONDS = 1000;
 	public static final int DEFAULT_PORT = 8080;
 	public static final int MAX_PLAYERS = 13;
@@ -127,31 +127,21 @@ public class Server extends Thread {
     		}
     		deckIndex += 4; // Increment, since 4 cards have been used
 
-    		// packetString = "BBBBBBBB";
-    		packetString = "AAAA";
-
-
     		System.out.println("Sending packetString: " + packetString);
+		  	// sample: packetString = "ABCD1234";
     		// Converting string to byte array
     		byte[] dataByteArray = packetString.getBytes();
+    		// System.out.println("PacketString lenght: " + packetString.length());
+    		// System.out.println("Byte array length: " + dataByteArray.length);
+    		// System.out.println("dataByteArray: " + dataByteArray);
+    		// int dataLength = dataByteArray.length;
 
-    		System.out.println("PacketString lenght: " + packetString.length());
-    		System.out.println("Byte array length: " + dataByteArray.length);
-
-    		System.out.println("dataByteArray: " + dataByteArray);
-
-    		int dataStart = 0;
-    		int dataLength = dataByteArray.length;
     		// send cards
-			sendBytes(playerSocket, dataByteArray, dataStart, dataLength);
+			sendBytes(playerSocket, dataByteArray);
 
-    		System.out.println("Test one player.");
-
-    		System.out.println("Infinite loop.");
-    		// while(true) {
-    		// 	System.out.print("");
-    		// }
-    		break;
+    		// System.out.println("Test one player.");
+    		// break;
+   		
     	} // End for each player socket
 
     	// more game steps here...
@@ -225,10 +215,7 @@ public class Server extends Thread {
 	} // End pickCards()
 
 	private void sendBytes(
-		Socket playerSocket,
-		byte[] dataByteArray,
-        int dataStart,
-        int dataLength) {
+		Socket playerSocket, byte[] dataByteArray) {
         
         try {
             System.out.println("Sever sending bytes to client "
@@ -238,7 +225,6 @@ public class Server extends Thread {
                 playerSocket.getOutputStream());
                     // A stream is a smaller river.
             dataOutputStream.flush();
-            // dataOutputStream.write(dataByteArray, dataStart, dataLength);
             dataOutputStream.write(dataByteArray);
             
         } catch (IOException e) {
