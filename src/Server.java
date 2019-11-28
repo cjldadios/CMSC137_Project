@@ -20,17 +20,23 @@ public class Server extends Thread {
 	private static final int TIMEOUT = 60 * 3 * SECONDS;
 	private Integer countdown = TIMEOUT/SECONDS - 10;
 
+	private Integer lastSeconds = 20; 
+
+
 	private ArrayList<Thread> playerListenerThreadList
 		= new ArrayList<Thread>(13);
 	private ArrayList<Socket> socketConnectionList = new ArrayList<Socket>(13);
 	private Scanner scanner = new Scanner(System.in);
     private boolean starting = false;
 
+    private String statString = "--------";
+
 	private ServerSocket serverSocket;
 	private PlayerAcceptingThread playerAcceptingThread;
 	private ArrayList<Integer> selectedCardList;
 
 	public ArrayList<String> playerSubmissionsList = new ArrayList<String>();
+	private ArrayList<Integer> submissionOrder = new ArrayList<Integer>();
 
     public Server() throws IOException {
     	System.out.println("Instaciating Server class");
@@ -135,11 +141,7 @@ public class Server extends Thread {
 		  	// sample: packetString = "ABCD1234";
     		// Converting string to byte array
     		byte[] dataByteArray = packetString.getBytes();
-    		// System.out.println("PacketString lenght: " + packetString.length());
-    		// System.out.println("Byte array length: " + dataByteArray.length);
-    		// System.out.println("dataByteArray: " + dataByteArray);
-    		// int dataLength = dataByteArray.length;
-
+    		
     		// send cards
 			sendBytes(playerSocket, dataByteArray);
 
@@ -161,7 +163,7 @@ public class Server extends Thread {
 	    	System.out.println("Waiting for players' action...");
     	
     	int entryCount = 0;
-    	ArrayList<Integer> submissionOrder = new ArrayList<Integer>();
+    	
 
     	while(!gameOver) {
     		// if received player action
@@ -193,44 +195,67 @@ public class Server extends Thread {
     					// where playerId2 has index 1
     				System.out.println("Sender: " + playerId);
     				System.out.println("recipient: " + recipient);
-    				sendBytes(socketConnectionList.get(recipient), playerEntry);
+    				
+    				// block forwarding bytes when someone already won
+    				if (this.submissionOrder.size() > 0) {
+    					// if someone won
+    					// Send stats!!! or... the winning combo?
+    					// get the winning previous entry
+	   					String[] entryTokensPrev = playerSubmissionsList
+		    				.get(entryCount-1).split(":");
+		    			String playerEntryPrev = entryTokensPrev[1];
+		    			// Send that to everyone instead
+		    			for (int i=0; i<socketConnectionList.size(); i+=1) {
+							sendBytes(socketConnectionList.get(i),
+								playerEntryPrev);
+						}
+
+    				} else {
+    					// normal operation, no winners yet
+    					sendBytes(socketConnectionList
+    						.get(recipient), playerEntry);
+    				}
 
     			} else {
     				// perhaps received a winning combination
     				System.out.println("player " + playerId
     					+ " passed his cards: " + playerEntry);
-
-	    				// Share to everyone the cards submitted
-	    				// Identify the player whom to pass the cards
-	    				for (int i=0; i<socketConnectionList.size(); i+=1) {
-	    					sendBytes(socketConnectionList.get(i), playerEntry);
-	    				}
-
-	    				// kaso, but the other player flushes the stream?
+    				// Share to everyone the cards submitted
+    				// Identify the player whom to pass the cards
+    				for (int i=0; i<socketConnectionList.size(); i+=1) {
+    					sendBytes(socketConnectionList.get(i), playerEntry);
+    				}
+    				// kaso, but the other player flushes the stream?
 
     				// Evaluate submission
-    				boolean valid = true;
+    				boolean winningCombo = true;
     				// checking if four-of-a-kind
     				for(int i=2; i<playerEntry.length(); i+=2) {
     					if (playerEntry.charAt(0) - playerEntry.charAt(i) != 0)
     					{
-    						valid = false;
+    						winningCombo = false;
     					}		
     				}
-    				
-    				if(valid) {
+					// if first entry to attempt submit that is valid
+					// of if someone already submitted a valid    		
+					System.out.println("Winnig combo: " + winningCombo);		
+					System.out.println("submissionOrder.size() : "
+						+ submissionOrder.size() );		
+    				if(winningCombo || submissionOrder.size() > 0) {
     					// if the kind of card is same for all four
     					// eg. 2H2D2C2S
-
     					// wait for everyone to submit
     					if (submissionOrder.size() == playerCount) {
     						// game over! exit while. print stats
     						gameOver = true; // when all submitted
     					} else {
     						// record the submission order
+							System.out.println("Adding player "
+								+ playerId + " to submission order");
+							System.out.println("With index "
+								+ submissionOrder.size());
     						submissionOrder.add(playerId);
     					}
-
     				} else {
     					System.out.println("\nFalse alarm!");
     					// gameOver = true;
@@ -254,7 +279,6 @@ public class Server extends Thread {
     		}
     	} // End while not game over
 
-    	String statString = "";
 
     	System.out.println("Game stats:");
     	for(int i=0; i<submissionOrder.size(); i+=1) {
@@ -272,7 +296,35 @@ public class Server extends Thread {
 		for (int i=0; i<socketConnectionList.size(); i+=1) {
 			sendBytes(socketConnectionList.get(i), statString);
 		}
-	
+
+		System.out.println("10 seconds before ending...");
+		try {
+			Thread.sleep(10 * 1000);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+
+		Thread timer = new Thread() {
+			public void run() {
+				for(int t=0; t<20; t+=1) {
+					try {
+						Thread.sleep(1000);
+						Server.this.lastSeconds -= 1;
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		};
+		timer.start();
+
+		// send stats to all again for 20 seconds
+		while(this.lastSeconds > 0) {
+			for (int i=0; i<socketConnectionList.size(); i+=1) {
+				sendBytes(socketConnectionList.get(i), statString);
+			}
+		}
+
     	System.out.println("Ending game...");
     	// System.out.println("SERVER FINISHED RUNNING!");
     	System.exit(0);
