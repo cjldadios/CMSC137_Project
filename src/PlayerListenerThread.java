@@ -45,7 +45,7 @@ public class PlayerListenerThread extends Thread {
 	public void run() {
 		while(true) {
             String received = receiveBytes();
-            System.out.println("Thread listener received: " + received);
+            System.out.println("\nThread listener received: " + received);
 
             // Save the received to the server
             this.server.playerSubmissionsList.add(received);
@@ -55,8 +55,8 @@ public class PlayerListenerThread extends Thread {
 
     public byte[] readBytes() {
         try {
-            System.out.println("Receiveing bytes to client "
-                + this.clientSocket + ".");
+            System.out.println("Receiving bytes from player no. "
+                + this.playerId + " " + this.clientSocket + ".");
 
             DataInputStream dataInputStream = new DataInputStream(
                 this.clientSocket.getInputStream());
@@ -105,7 +105,7 @@ public class PlayerListenerThread extends Thread {
                 this.clientSocket.getInputStream());
                     // A stream is a smaller river.
 
-            System.out.println("PlayerListenerThread: Hello?");
+            // System.out.println("PlayerListenerThread: Hello?");
 
             // the next four bytes of this input stream,
             // interpreted as an int.
@@ -113,7 +113,7 @@ public class PlayerListenerThread extends Thread {
 
             boolean doneReading = false;
             System.out.println("Player Thread Reading is waiting for " 
-                + "client submission");
+                + "player no. " + playerId +" submission");
             // hread.sleep(1000);
 
 
@@ -130,8 +130,9 @@ public class PlayerListenerThread extends Thread {
                     try {
                         Thread.sleep(1000);
                         // System.out.print("*");
-                        System.out.print("Player no. " + playerId + "quitted!");
-                        System.out.print("Ending game...");
+                        System.out.println("Player no. " + playerId
+                            + " quitted!");
+                        System.out.println("Ending game...");
                         System.exit(0);
                     } catch(Exception ex) {
                         ex.printStackTrace();

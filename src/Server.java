@@ -13,11 +13,11 @@ import java.util.Collections;
 import java.io.DataOutputStream;
 
 public class Server extends Thread {
-	private static final int MIN_PLAYERS = 1; // 3 supposedly, else testing
+	private static final int MIN_PLAYERS = 2; // 3 supposedly, else testing
 	private static final int SECONDS = 1000;
 	public static final int DEFAULT_PORT = 8080;
 	public static final int MAX_PLAYERS = 13;
-	private static final int TIMEOUT = 60 * SECONDS;
+	private static final int TIMEOUT = 60 * 3 * SECONDS;
 	private Integer countdown = TIMEOUT/SECONDS - 10;
 
 	private ArrayList<Thread> playerListenerThreadList
@@ -87,7 +87,7 @@ public class Server extends Thread {
 				// System.out.print("Press Enter to start: ");
 				System.out.print("\nEnter 'play' to start game!\n");
 				String answer = scanner.next();
-				if(answer.equals("play")) {
+				if(answer.equals("play") || answer.equals("PLAY")) {
 					starting = true;
 				} else {
 					starting = false;
@@ -161,6 +161,8 @@ public class Server extends Thread {
 	    	System.out.println("Waiting for players' action...");
     	
     	int entryCount = 0;
+    	ArrayList<Integer> submissionOrder = new ArrayList<Integer>();
+
     	while(!gameOver) {
     		// if received player action
     		if (entryCount < playerSubmissionsList.size()) {
@@ -185,7 +187,12 @@ public class Server extends Thread {
     					+ " passed a card: " + playerEntry);
 
     				// Identify the player whom to pass the cards
-    				int recipient = playerId == playerCount? 0: playerId-1;
+    				int recipient = playerId == playerCount? 0: playerId;
+    					// first player has id 1, not zero
+    					// So, eg. playerid 1 will pass card to playerId2
+    					// where playerId2 has index 1
+    				System.out.println("Sender: " + playerId);
+    				System.out.println("recipient: " + recipient);
     				sendBytes(socketConnectionList.get(recipient), playerEntry);
 
 
@@ -193,9 +200,53 @@ public class Server extends Thread {
     				// passing a winning combination, perhaps
     				System.out.println("player " + playerId
     					+ " passed his cards: " + playerEntry);
+
+    				// Share to everyone the cards submitted
+    				// Identify the player whom to pass the cards
+    				for (int i=0; i<socketConnectionList.size(); i+=1) {
+    					sendBytes(socketConnectionList.get(i), playerEntry);
+    				}
+
+    				// Evaluate submission
+    				boolean valid = true;
+    				// checking if four-of-a-kind
+    				for(int i=2; i<playerEntry.length(); i+=2) {
+    					if (playerEntry.charAt(0) - playerEntry.charAt(i) != 0)
+    					{
+    						valid = false;
+    					}		
+    				}
+    				
+    				if(valid) {
+    					// if the kind of card is same for all four
+    					// eg. 2H2D2C2S
+
+    					// wait for everyone to submit
+    					if (submissionOrder.size() == playerCount) {
+    						// game over! exit while. print stats
+    						gameOver = true;
+    					} else {
+    						// record the submission order
+    						submissionOrder.add(playerId);
+    					}
+
+    				} else {
+    					System.out.println("False alarm!");
+    					// gameOver = true;
+    				}
     			}
 
     			entryCount += 1;
+
+    			// Don't reset. Just fill the arraylist until game over.
+    			// // if the all players have submitted
+    			// if(entryCount >= playerCount) {
+    			// 	// reset playerSubmissionsList by popping first 4
+    			// 	for(int i=0, i<playerCount; i+=1) {
+    			// 		socketConnectionList.remove(0); // pop at head
+    			// 		entryCount -= 1;
+    			// 	}
+    			// }
     		}
 
     		try {
@@ -210,8 +261,13 @@ public class Server extends Thread {
     		} else {
     			System.out.print(countdown.toString() + "...");
     		}
-    	}
+    	} // End while not game over
 
+    	System.out.println("Game stats:");
+    	for(int i=0; i<submissionOrder.size(); i+=1) {
+    		System.out.println("\t" + i + ". player no. "
+    			+ submissionOrder.get(i));
+    	}
 
     	// more game steps here...
 
@@ -288,7 +344,7 @@ public class Server extends Thread {
 	private void sendBytes(Socket playerSocket, byte[] dataByteArray) {
         
         try {
-            System.out.println("Sever sending bytes to client "
+            System.out.println("Server sending bytes to client "
                 + playerSocket + "...");
 
             DataOutputStream dataOutputStream = new DataOutputStream(
@@ -307,7 +363,7 @@ public class Server extends Thread {
 		byte[] dataByteArray = submission.getBytes();
         
         try {
-            System.out.println("Sever sending bytes to server "
+            System.out.println("Sever sending bytes to player "
                 + playerSocket + "...");
 
             DataOutputStream dataOutputStream = new DataOutputStream(
