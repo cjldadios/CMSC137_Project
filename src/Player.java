@@ -22,6 +22,7 @@ public class Player extends Thread {
 	private String submission = "";
 
 	private boolean winner = false;
+	private boolean waitingForStats = false;
 
 	
 	public Player(String serverName) throws IOException {
@@ -87,7 +88,7 @@ public class Player extends Thread {
 				}
 				System.out.println("Submission: " + submission);
 				// After selecting action, send the card to the server
-				sendBytes(submission);
+
 				// check if valid
 				// Evaluate submission
 				boolean validEntry = true;
@@ -114,9 +115,12 @@ public class Player extends Thread {
 					System.out.println("\nYou win!!!!!!!\n");
 					// wait for server validation
 					this.winner = true;
+					this.waitingForStats = true;
 				} else if(someoneWon) {
 					System.out.println("You submitted  P...");
 					// wait for server validation
+					System.out.println("Waiting for stats...");
+					this.waitingForStats = true;
 				} else {
 					System.out.println("False alarm!");
 					continue; // input card this time
@@ -148,7 +152,9 @@ public class Player extends Thread {
 			while(!receivedValid) {
 				receivedString = receiveBytes();
 				// Evaluate received string
-				if(receivedString.charAt(0) - '-' == 0) {
+				
+				// only accept cards while not winning
+				if( !winner && receivedString.charAt(0) - '-' == 0) {
 					// if the first byte is '-', the sending player's action
 					// is just to pass a card to this player
 					System.out.println("Received card: " + receivedString);
@@ -169,8 +175,9 @@ public class Player extends Thread {
 					}
 					receivedValid = true;
 					gameOver = true;
-				} else {
+				} else if(!waitingForStats) {
 					// passing a winning combination, perhaps
+					System.out.println("Not yet waiting for stats...");
 					System.out.println("\nSomeone submitted: "
 						+ receivedString);
 					// check if validCardCombo
@@ -199,9 +206,18 @@ public class Player extends Thread {
 							System.out.println("\nEnter 'p'!\n");
 							validCardCombo = true; // received valid data, which
 								// means thies player must enter 'p' also
+
+							// flush!!! self!!!
+
 							shouldEnterP = true;
+							receivedValid = true; // dont receive again
+								// but send action
 						}					
 					} // end Evaluate submission
+				} else {
+					// System.out.println("Oxxxx{zzzzzzzzzzzz>");
+					// System.exit(0);
+					// just waiting for stats...
 				}
 			} // while not receiving valid
 

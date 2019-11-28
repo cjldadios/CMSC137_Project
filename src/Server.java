@@ -166,6 +166,8 @@ public class Server extends Thread {
     	
 
     	while(!gameOver) {
+    		System.out.println("------------ playerSubmissionsList.size(): "
+    			+ playerSubmissionsList.size());
     		// if received player action
     		if (entryCount < playerSubmissionsList.size()) {
     			// playerSubmissionsList is being updated
@@ -197,10 +199,13 @@ public class Server extends Thread {
     				System.out.println("recipient: " + recipient);
     				
     				// block forwarding bytes when someone already won
+    				System.out.println("submissionOrder.size(): "
+    					+ submissionOrder.size());
     				if (this.submissionOrder.size() > 0) {
     					// if someone won
     					// Send stats!!! or... the winning combo?
     					// get the winning previous entry
+    					System.out.println("Sending to all the winning cards");
 	   					String[] entryTokensPrev = playerSubmissionsList
 		    				.get(entryCount-1).split(":");
 		    			String playerEntryPrev = entryTokensPrev[1];
@@ -209,7 +214,6 @@ public class Server extends Thread {
 							sendBytes(socketConnectionList.get(i),
 								playerEntryPrev);
 						}
-
     				} else {
     					// normal operation, no winners yet
     					sendBytes(socketConnectionList
@@ -247,6 +251,7 @@ public class Server extends Thread {
     					// wait for everyone to submit
     					if (submissionOrder.size() == playerCount) {
     						// game over! exit while. print stats
+							System.out.println("All player submitted.");
     						gameOver = true; // when all submitted
     					} else {
     						// record the submission order
