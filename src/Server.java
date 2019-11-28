@@ -13,11 +13,12 @@ import java.util.Collections;
 import java.io.DataOutputStream;
 
 public class Server extends Thread {
-	private static final int MIN_PLAYERS = 2; // 3 supposedly, else testing
-	// private static final int SECONDS = 1000;
+	private static final int MIN_PLAYERS = 1; // 3 supposedly, else testing
+	private static final int SECONDS = 1000;
 	public static final int DEFAULT_PORT = 8080;
 	public static final int MAX_PLAYERS = 13;
-	private static final int TIMEOUT = 60 * Main.SECONDS;
+	private static final int TIMEOUT = 60 * SECONDS;
+	private Integer countdown = TIMEOUT/SECONDS - 10;
 
 	private ArrayList<Thread> playerListenerThreadList
 		= new ArrayList<Thread>(13);
@@ -28,6 +29,8 @@ public class Server extends Thread {
 	private ServerSocket serverSocket;
 	private PlayerAcceptingThread playerAcceptingThread;
 	private ArrayList<Integer> selectedCardList;
+
+	public ArrayList<String> playerSubmissionsList = new ArrayList<String>();
 
     public Server() throws IOException {
     	System.out.println("Instaciating Server class");
@@ -50,7 +53,8 @@ public class Server extends Thread {
         this.playerAcceptingThread = new PlayerAcceptingThread(
         	this.playerListenerThreadList,
         	this.socketConnectionList,
-        	this.serverSocket); // ...using the same ServerSocket of Server
+        	this.serverSocket,
+        	this); // ...using the same ServerSocket of Server
       	
 
         // System.out.println("Invoking this.playerAcceptingThr"
@@ -144,9 +148,76 @@ public class Server extends Thread {
    		
     	} // End for each player socket
 
+    	// start accepting actions from players
+    	System.out.println("Starting player listener" 
+    		+ "threads for each player...");
+    	for (int i=0; i<playerCount; i+=1) {
+    		this.playerListenerThreadList.get(i).start();
+    		int index = i + 1;
+    		System.out.println("Ready for player no. " + index + "...");
+    	}
+
+    	boolean gameOver = false;
+	    	System.out.println("Waiting for players' action...");
+    	
+    	int entryCount = 0;
+    	while(!gameOver) {
+    		// if received player action
+    		if (entryCount < playerSubmissionsList.size()) {
+    			// playerSubmissionsList is being updated
+    			// by this class' PlayerListenerThreadList elements
+
+    			// Evaluate player entry
+    			System.out.println("Evaluating entry #" + entryCount);
+
+    			String[] entryTokens = playerSubmissionsList
+    				.get(entryCount).split(":");
+    			int playerId = Integer.parseInt(entryTokens[0]);
+    			String playerEntry = entryTokens[1];
+    			// possible player entries:
+    			// ------3D, passing 3 of diamonds
+    			// 3S3H3C3D, passing 4 of a kind
+    			// 4S3S3C3D, passing 4, but not the same kind
+    			if(playerEntry.charAt(0) - '-' == 0) {
+    				// if the first byte is '-', the player's action
+    				// is just to pass a card
+    				System.out.println("player " + playerId
+    					+ " passed a card: " + playerEntry);
+
+    				// Identify the player whom to pass the cards
+    				int recipient = playerId == playerCount? 0: playerId-1;
+    				sendBytes(socketConnectionList.get(recipient), playerEntry);
+
+
+    			} else {
+    				// passing a winning combination, perhaps
+    				System.out.println("player " + playerId
+    					+ " passed his cards: " + playerEntry);
+    			}
+
+    			entryCount += 1;
+    		}
+
+    		try {
+    			Thread.sleep(1000);
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}
+
+    		countdown -= 1;
+    		if (countdown <= 0){
+    			System.out.print("...");
+    		} else {
+    			System.out.print(countdown.toString() + "...");
+    		}
+    	}
+
+
     	// more game steps here...
+
 	
-    	System.out.println("Ending game...");
+    	// System.out.println("Ending game...");
+    	System.out.println("SERVER FINISHED RUNNING!");
     	System.exit(0);
 	}
 
@@ -214,11 +285,29 @@ public class Server extends Thread {
 		return pickedCards;
 	} // End pickCards()
 
-	private void sendBytes(
-		Socket playerSocket, byte[] dataByteArray) {
+	private void sendBytes(Socket playerSocket, byte[] dataByteArray) {
         
         try {
             System.out.println("Sever sending bytes to client "
+                + playerSocket + "...");
+
+            DataOutputStream dataOutputStream = new DataOutputStream(
+                playerSocket.getOutputStream());
+                    // A stream is a smaller river.
+            dataOutputStream.flush();
+            dataOutputStream.write(dataByteArray);
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendBytes(Socket playerSocket, String submission) {
+		// convert string into byte array
+		byte[] dataByteArray = submission.getBytes();
+        
+        try {
+            System.out.println("Sever sending bytes to server "
                 + playerSocket + "...");
 
             DataOutputStream dataOutputStream = new DataOutputStream(

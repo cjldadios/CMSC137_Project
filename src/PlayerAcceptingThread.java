@@ -10,13 +10,15 @@ public class PlayerAcceptingThread extends Thread {
 	private ArrayList<Thread> playerListenerThreadList;
 	private ArrayList<Socket> socketConnectionList;
 	private ServerSocket serverSocket;
+	private Server server;
 
 	private int connectionCount = 0;
 
 	public PlayerAcceptingThread(
 		ArrayList<Thread> playerListenerThreadList,
 		ArrayList<Socket> socketConnectionList,
-		ServerSocket serverSocket
+		ServerSocket serverSocket,
+		Server server
 		) {
 
 		System.out.println("Instanciating Server.PlayerAcceptingThread");
@@ -24,6 +26,7 @@ public class PlayerAcceptingThread extends Thread {
 		this.playerListenerThreadList = playerListenerThreadList;
 		this.socketConnectionList = socketConnectionList;
 		this.serverSocket = serverSocket;
+		this.server = server;
 	}
 
 	public void run() {
@@ -52,7 +55,8 @@ public class PlayerAcceptingThread extends Thread {
 	        	// System.out.println("Adding new Server.PlayerListenerThread" 
 	        		// + "for player #" + index);
 	        	PlayerListenerThread playerListenerThread
-	        		= new PlayerListenerThread(serverSocket, clientSocket);
+	        		= new PlayerListenerThread(serverSocket, clientSocket,
+	        			index, this.server);
 	        	playerListenerThreadList.add(playerListenerThread);
 
 	        	/* Update Server's socketConnectionList, <- same as...

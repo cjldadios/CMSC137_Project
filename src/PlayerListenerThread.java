@@ -16,14 +16,22 @@ import java.net.Socket;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class PlayerListenerThread extends Thread {
     private ServerSocket serverSocket;
     private Socket clientSocket; // player may be referred as client
+    private Integer playerId;
+    private Server server;
 
-    public PlayerListenerThread(ServerSocket serverSocket,
-                                    Socket clientSocket) {
+    public PlayerListenerThread(
+        ServerSocket serverSocket,
+        Socket clientSocket,
+        int playerId,
+        Server server) {
 
+        this.server = server;
+        this.playerId = playerId;
         this.serverSocket = serverSocket;
         this.clientSocket = clientSocket;
         System.out.println("Client from "
@@ -36,7 +44,12 @@ public class PlayerListenerThread extends Thread {
 	@Override
 	public void run() {
 		while(true) {
-           
+            String received = receiveBytes();
+            System.out.println("Thread listener received: " + received);
+
+            // Save the received to the server
+            this.server.playerSubmissionsList.add(received);
+                // received string is in format <playerId>:<8bytesEntry>
 		}
 	}
 
@@ -80,6 +93,77 @@ public class PlayerListenerThread extends Thread {
             e.printStackTrace();
         }
     }
+
+    // returns player id and what the player sent, separated by colon
+    private String receiveBytes() {
+        String playerIdColonActionString = "";
+        try {
+            System.out.println("Receiveing bytes from Player "
+                + clientSocket + "...");
+
+            DataInputStream dataInputStream = new DataInputStream(
+                this.clientSocket.getInputStream());
+                    // A stream is a smaller river.
+
+            System.out.println("PlayerListenerThread: Hello?");
+
+            // the next four bytes of this input stream,
+            // interpreted as an int.
+            // Sever sent eight bytes, sample = "KH4SAC2D"
+
+            boolean doneReading = false;
+            System.out.println("Player Thread Reading is waiting for " 
+                + "client submission");
+            // hread.sleep(1000);
+
+
+            int fourBytesPart1of2 = 0;
+            int fourBytesPart2of2 = 0;
+
+            while (!doneReading) {
+                try {
+                    fourBytesPart1of2 = dataInputStream.readInt();
+                    fourBytesPart2of2 = dataInputStream.readInt();
+                    doneReading = true;
+                } catch (Exception e) {
+                    // e.printStackTrace();
+                    try {
+                        Thread.sleep(1000);
+                        // System.out.print("*");
+                        System.out.print("Player no. " + playerId + "quitted!");
+                        System.out.print("Ending game...");
+                        System.exit(0);
+                    } catch(Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+
+            }
+
+            // System.out.println("Here?");
+
+            byte[] receivedBytesPart1 =  ByteBuffer.allocate(4)
+                                        .putInt(fourBytesPart1of2).array();
+            byte[] receivedBytesPart2 =  ByteBuffer.allocate(4)
+                                        .putInt(fourBytesPart2of2).array();
+            
+            String part1String = new String(receivedBytesPart1);
+            String part2String = new String(receivedBytesPart2);
+
+            String completeReceivedDataString = part1String + part2String;
+            // System.out.println("completeReceivedDataString: " 
+                // + completeReceivedDataString);
+
+            playerIdColonActionString =  this.playerId.toString()
+                + ":" + completeReceivedDataString;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("End of line exception!");
+        }
+
+        return playerIdColonActionString;
+    } // End receiveBytes()
 }
 
 /*
