@@ -3,7 +3,7 @@ import java.util.Scanner;
 import java.io.IOException;
 
 public class Main {
-	public static final String HOST_IP = new String("10.11.28.24");
+	public static final String HOST_IP = new String("10.0.53.91");
 	public static final int SECONDS = 1000; // 1 thousand milliseconds
 
 	public static void main(String args[]) {

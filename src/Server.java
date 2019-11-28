@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.io.DataOutputStream;
 
 public class Server extends Thread {
-	private static final int MIN_PLAYERS = 2; // 3 supposedly, else testing
+	private static final int MIN_PLAYERS = 3; // 3 supposedly, else testing
 	private static final int SECONDS = 1000;
 	public static final int DEFAULT_PORT = 8080;
 	public static final int MAX_PLAYERS = 13;
@@ -195,17 +195,18 @@ public class Server extends Thread {
     				System.out.println("recipient: " + recipient);
     				sendBytes(socketConnectionList.get(recipient), playerEntry);
 
-
     			} else {
-    				// passing a winning combination, perhaps
+    				// perhaps received a winning combination
     				System.out.println("player " + playerId
     					+ " passed his cards: " + playerEntry);
 
-    				// Share to everyone the cards submitted
-    				// Identify the player whom to pass the cards
-    				for (int i=0; i<socketConnectionList.size(); i+=1) {
-    					sendBytes(socketConnectionList.get(i), playerEntry);
-    				}
+	    				// Share to everyone the cards submitted
+	    				// Identify the player whom to pass the cards
+	    				for (int i=0; i<socketConnectionList.size(); i+=1) {
+	    					sendBytes(socketConnectionList.get(i), playerEntry);
+	    				}
+
+	    				// kaso, but the other player flushes the stream?
 
     				// Evaluate submission
     				boolean valid = true;
@@ -224,30 +225,20 @@ public class Server extends Thread {
     					// wait for everyone to submit
     					if (submissionOrder.size() == playerCount) {
     						// game over! exit while. print stats
-    						gameOver = true;
+    						gameOver = true; // when all submitted
     					} else {
     						// record the submission order
     						submissionOrder.add(playerId);
     					}
 
     				} else {
-    					System.out.println("False alarm!");
+    					System.out.println("\nFalse alarm!");
     					// gameOver = true;
     				}
     			}
 
     			entryCount += 1;
-
-    			// Don't reset. Just fill the arraylist until game over.
-    			// // if the all players have submitted
-    			// if(entryCount >= playerCount) {
-    			// 	// reset playerSubmissionsList by popping first 4
-    			// 	for(int i=0, i<playerCount; i+=1) {
-    			// 		socketConnectionList.remove(0); // pop at head
-    			// 		entryCount -= 1;
-    			// 	}
-    			// }
-    		}
+    		} // if received an entry from player
 
     		try {
     			Thread.sleep(1000);
@@ -263,17 +254,27 @@ public class Server extends Thread {
     		}
     	} // End while not game over
 
+    	String statString = "";
+
     	System.out.println("Game stats:");
     	for(int i=0; i<submissionOrder.size(); i+=1) {
     		System.out.println("\t" + i + ". player no. "
     			+ submissionOrder.get(i));
+
+    		// report only the top 3
+    		if(i < 3) {
+	    		statString = statString + submissionOrder.get(i).toString();
+    		}
     	}
-
-    	// more game steps here...
-
+    	statString = statString + "--"; // last byte "--", meaning stats
+    	
+    	// send stats to all
+		for (int i=0; i<socketConnectionList.size(); i+=1) {
+			sendBytes(socketConnectionList.get(i), statString);
+		}
 	
-    	// System.out.println("Ending game...");
-    	System.out.println("SERVER FINISHED RUNNING!");
+    	System.out.println("Ending game...");
+    	// System.out.println("SERVER FINISHED RUNNING!");
     	System.exit(0);
 	}
 

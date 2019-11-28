@@ -16,10 +16,9 @@ public class Player extends Thread {
 
 	Socket serverSocket;
 	// Socket socket;
-
 	private int playerId;
-
 	private String cardsAtHandString = "";
+	private String receivedString = "";
 
 	
 	public Player(String serverName) throws IOException {
@@ -82,20 +81,35 @@ public class Player extends Thread {
 				sendBytes(submission);
 				// check if valid
 				// Evaluate submission
-				boolean valid = true;
+				boolean validEntry = true;
 				// checking if four-of-a-kind
 				for(int i=2; i<submission.length(); i+=2) {
 					if(submission.charAt(0) - submission.charAt(i)
 						!= 0) {
-						valid = false;
+						validEntry = false;
 					}		
 				}
-				if(!valid) {
+
+				// Evaluate received From other player
+				// maybe the other player aleady won
+				boolean someoneWon = true;
+				// checking if four-of-a-kind
+				for(int i=2; i<receivedString.length(); i+=2) {
+					if(receivedString.charAt(0) - receivedString.charAt(i)
+						!= 0) {
+						someoneWon = false;
+					}		
+				}
+
+				if(validEntry) {
+					System.out.println("You win!");
+					// wait for server validation
+				} else if(someoneWon) {
+					System.out.println("Player submitted...");
+					// wait for server validation
+				} else {
 					System.out.println("False alarm!");
 					continue; // input card this time
-				} else {
-					System.out.println("You win!");
-					gameOver = true;
 				}
 
 			} else if(action.equals("quit") || action.equals("exit")) {
@@ -111,89 +125,68 @@ public class Player extends Thread {
 						+ cardList.remove(actionInt-1);
 				}
 
-				System.out.println("Submission: " + submission);
-				
-				// After selecting action, send the card to the server
-				sendBytes(submission);
-
-				boolean receivedValid = false;
-
-				while(!receivedValid) {
-					String receivedString = receiveBytes();
-					// Evaluate received string
-					if(receivedString.charAt(0) - '-' == 0) {
-						// if the first byte is '-', the sending player's action
-						// is just to pass a card to this player
-						System.out.println("Received card: " + receivedString);
-						// Just get the last 2 bytes out of 8, the card
-						String receivedCard
-							= String.valueOf(receivedString.charAt(6))
-							+ String.valueOf(receivedString.charAt(7));
-						// Add to cardList
-						cardList.add(receivedCard);
-						receivedValid = true;
-					} else {
-						// passing a winning combination, perhaps
-						System.out.println("Someone submitted: "
-							+ receivedString);
-						// check if valid
-						// Evaluate submission
-						boolean valid = true;
-						// checking if four-of-a-kind
-						for(int i=2; i<receivedString.length(); i+=2) {
-							if(submission.charAt(0) - receivedString.charAt(i)
-								!= 0) {
-								valid = false;
-							}		
-						}
-						if(!valid) {
-							System.out.println("False alarm!");
-							// wait again for a card
-						}
-						// end Evaluate submission
-					}
-
-				} // while not receiving valid
 				
 			} // end checking player action
 
-			// System.out.println("Submission: " + submission);
-			// // After selecting action, send the card to the server
-			// sendBytes(submission);
-			// String receivedString = receiveBytes();
-			// // Evaluate received string
-			// if(receivedString.charAt(0) - '-' == 0) {
-			// 	// if the first byte is '-', the sending player's action
-			// 	// is just to pass a card to this player
-			// 	System.out.println("Received card: " + receivedString);
-			// 	// Just get the last 2 bytes out of 8, the card
-			// 	String receivedCard
-			// 		= String.valueOf(receivedString.charAt(6))
-			// 		+ String.valueOf(receivedString.charAt(7));
-			// 	// Add to cardList
-			// 	cardList.add(receivedCard);
-			// } else {
-			// 	// passing a winning combination, perhaps
-			// 	System.out.println("Someone submitted: " + receivedString);
-			// 	// check if valid
-			// 	// Evaluate submission
-			// 	boolean valid = true;
-			// 	// checking if four-of-a-kind
-			// 	for(int i=2; i<submission.size(); i+=2) {
-			// 		if (submission.charAt(0) - submission.charAt(i) != 0)
-			// 		{
-			// 			valid = false;
-			// 		}		
-			// 	}
-			// 	if(!valid) {
-			// 		System.out.println("False alarm!");
-			// 		continue; // get input again
-			// 	}
-			// 	// end Evaluate submission
-			// }
+			System.out.println("Submission: " + submission);
+			// After selecting action, send the card to the server
+			sendBytes(submission);
+
+			boolean receivedValid = false;
+
+			while(!receivedValid) {
+				receivedString = receiveBytes();
+				// Evaluate received string
+				if(receivedString.charAt(0) - '-' == 0) {
+					// if the first byte is '-', the sending player's action
+					// is just to pass a card to this player
+					System.out.println("Received card: " + receivedString);
+					// Just get the last 2 bytes out of 8, the card
+					String receivedCard
+						= String.valueOf(receivedString.charAt(6))
+						+ String.valueOf(receivedString.charAt(7));
+					// Add to cardList
+					cardList.add(receivedCard);
+					receivedValid = true;
+				} else if (receivedString.charAt(7) - '-' == 0) {
+					// if last byte received is '-', receiving stats
+					System.out.println("Waiting for stats...");
+					String stats = receiveBytes();
+					for (int i=0; i<3; i+=1) {
+						System.out.println("" + i + ". " 
+							+ stats.substring(i*2,i*2+2));
+					}
+					receivedValid = true;
+					gameOver = true;
+				} else {
+					// passing a winning combination, perhaps
+					System.out.println("Someone submitted: "
+						+ receivedString);
+					// check if valid
+					// Evaluate submission
+					boolean valid = true;
+					// checking if four-of-a-kind
+					for(int i=2; i<receivedString.length(); i+=2) {
+						if(receivedString.charAt(0) - receivedString.charAt(i)
+							!= 0) {
+							valid = false;
+						}		
+					}
+					if(!valid) {
+						System.out.println("False alarm!");
+						// wait again for a card
+						valid = false; // still not valid
+					} else {
+						System.out.println("Pass!");
+						valid = true; // received valid data, which
+							// means thies player must enter 'p' also
+					}
+					// end Evaluate submission
+				}
+			} // while not receiving valid
 		} // End while not game over
 
-		System.out.println("Player exited the game.");
+		System.out.println("Exiting the game.");
 	}
 
 	private void initializeCards() {

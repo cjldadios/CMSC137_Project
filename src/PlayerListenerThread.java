@@ -45,6 +45,11 @@ public class PlayerListenerThread extends Thread {
 	public void run() {
 		while(true) {
             String received = receiveBytes();
+            if (received.equals("x")) {
+                System.out.println("Player no. " + playerId + " finished");
+                // Send stats
+                break;
+            }
             System.out.println("\nThread listener received: " + received);
 
             // Save the received to the server
@@ -127,13 +132,19 @@ public class PlayerListenerThread extends Thread {
                     doneReading = true;
                 } catch (Exception e) {
                     // e.printStackTrace();
+                    System.out.println("Player no. " + playerId
+                            + " is waiting for others.");
+                        
                     try {
                         Thread.sleep(1000);
                         // System.out.print("*");
                         System.out.println("Player no. " + playerId
-                            + " quitted!");
-                        System.out.println("Ending game...");
-                        System.exit(0);
+                            + " exited.");
+                        // System.out.println("Ending game...");
+                        // System.exit(0);
+                        // doneReading = true;
+
+                        // return "x";
                     } catch(Exception ex) {
                         ex.printStackTrace();
                     }
